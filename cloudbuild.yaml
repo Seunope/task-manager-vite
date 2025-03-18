@@ -1,0 +1,59 @@
+steps:
+  - id: 'set-project'
+    name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud config set project ${_PROJECT_ID}
+
+  - id: "docker-auth"
+    name: 'gcr.io/cloud-builders/gcloud'
+    args: ['auth', 'configure-docker', '${_REGION}-docker.pkg.dev']
+
+  - id: "docker-build"
+    name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '-t', '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY_NAME}/${_SERVICE_NAME}:$COMMIT_SHA',
+      '--build-arg', 'VITE_API_URL=${_VITE_API_URL}',
+      '--build-arg', 'VITE_API_URL_V1=${_VITE_API_URL_V1}',
+      '.'
+    ]
+
+  - id: "docker-push"
+    name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY_NAME}/${_SERVICE_NAME}:$COMMIT_SHA']
+
+
+  - id: "deploy-CloudRun-Service"
+    name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE_NAME}-${_ENV}'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY_NAME}/${_SERVICE_NAME}:$COMMIT_SHA'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--service-account'
+      - '${_SERVICE_ACCOUNT}'
+      - '--vpc-connector'
+      - '${_VPC_CONNECTOR}'
+      - '--vpc-egress'
+      - 'all-traffic'
+      - '--set-env-vars'
+      - 'VITE_API_URL=${_VITE_API_URL},VITE_API_URL_V1=${_VITE_API_URL_V1}'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  pool:
+    name: 'projects/${_PROJECT_ID}/locations/${_REGION}/workerPools/${_WORKER_POOL}'
+  dynamicSubstitutions: true 
+
+substitutions:
+ _VITE_API_URL: ${_VITE_API_URL}
+ _VITE_API_URL_V1: ${_VITE_API_URL_V1}

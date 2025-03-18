@@ -1,0 +1,40 @@
+# Ignore version control system files
+.git
+.gitignore
+
+# Ignore development and test files
+node_modules
+npm-debug.log
+yarn-error.log
+*.spec.ts
+*.test.ts
+*.spec.js
+*.test.js
+coverage
+dist
+build
+deployments
+.github
+
+# Ignore unnecessary build artifacts
+Dockerfile*
+docker-compose*
+*.md
+
+# Ignore editor and IDE files
+.vscode
+.idea
+*.iml
+
+# Ignore local configuration files
+.env
+.env.local
+.env.*.local
+.env.test
+.env.development
+.env.production
+
+# Ignore miscellaneous files
+*.log
+.DS_Store
+Thumbs.db

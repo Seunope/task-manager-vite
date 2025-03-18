@@ -1,0 +1,31 @@
+services:
+  web-frontend:
+    image: ${IMAGE_NAME}
+    ports:
+      - "5173:5173"
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    secrets:
+      - gitlab-token
+    env_file:
+      - .env
+    networks:
+      - shared-backend-network
+    volumes:
+      - data:/data
+
+volumes:
+  data:
+
+networks:
+  shared-backend-network:
+    external: true
+
+secrets:
+  gitlab-token:
+    external: true
