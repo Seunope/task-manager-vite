@@ -3,6 +3,14 @@ import { useFormik } from 'formik';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import Button from '../Button';
+import { SIGN_UP_USER } from '../../config/api/http';
+import { SignUpDTO } from '../../config/utils/types';
+import { CustomAxiosErrorType, onError, onSuccess } from '../../config/api/http-mthd';
+import { useState } from 'react';
+import { addUserData } from '../../config/redux/reducers/userSlice';
+import { AUTH_CONSTANTS } from '../../constants/auth';
+import { useDispatch } from 'react-redux';
+import BeatLoader from 'react-spinners/BeatLoader';
 
 interface SignupFormValues {
   name: string;
@@ -11,7 +19,36 @@ interface SignupFormValues {
 }
 
 const SignupForm = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  const doSignUp = async (input: SignUpDTO) => {
+    try {
+      setLoading(true);
+      const response = await SIGN_UP_USER(input);
+      setLoading(false);
+      const res = onSuccess(response);
+      console.log('resSSSSS', res);
+      if (res && res.status) {
+        const { data } = response?.data;
+        localStorage.setItem(AUTH_CONSTANTS.AUTH_TOKEN, JSON.stringify(data?.accessToken));
+        dispatch(addUserData(data?.user));
+        navigate('/dashboard');
+        toast.success(res.message || 'An error. Try again');
+        return;
+      } else {
+        toast.error(res.message || 'An error. Try again');
+      }
+    } catch (e: unknown | CustomAxiosErrorType) {
+      let msg = '';
+      const disError = onError(e as CustomAxiosErrorType);
+      console.log('DDDDd', disError);
+      msg = disError as string;
+      toast.error(msg);
+      setLoading(false);
+    }
+  };
   const formik = useFormik<SignupFormValues>({
     initialValues: {
       name: '',
@@ -24,8 +61,8 @@ const SignupForm = () => {
       password: Yup.string().required('Required'),
     }),
     onSubmit: (values) => {
-      toast.success('Signup successful!');
-      console.log('Signup values:', values);
+      // console.log('Signup values:', values);
+      doSignUp(values);
     },
   });
 
@@ -85,7 +122,11 @@ const SignupForm = () => {
         ) : null}
       </div>
 
-      <Button onClick={() => navigate('/dashboard')}>Sign Up</Button>
+      {!loading ? (
+        <Button onClick={() => formik.handleSubmit()}>Sign Up</Button>
+      ) : (
+        <BeatLoader color="blue" />
+      )}
     </form>
   );
 };

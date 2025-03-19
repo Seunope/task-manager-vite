@@ -95,11 +95,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Header
-        user={{
-          name: 'John DoeX',
-        }}
-      />
+      <Header />
 
       {/* Dashboard */}
       <DragDropContext onDragEnd={onDragEnd}>

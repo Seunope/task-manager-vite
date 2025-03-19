@@ -1,8 +1,16 @@
 import * as Yup from 'yup';
 import Button from '../Button';
+import { useState } from 'react';
 import { useFormik } from 'formik';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import { BeatLoader } from 'react-spinners';
+import { LOGIN_USER } from '../../config/api/http';
+import { onSuccess, CustomAxiosErrorType, onError } from '../../config/api/http-mthd';
+import { LoginDTO } from '../../config/utils/types';
+import { AUTH_CONSTANTS } from '../../constants/auth';
+import { useDispatch } from 'react-redux';
+import { addUserData, updateUser } from '../../config/redux/reducers/userSlice';
 
 interface LoginFormValues {
   email: string;
@@ -10,7 +18,35 @@ interface LoginFormValues {
 }
 
 const LoginForm = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  const doLogin = async (input: LoginDTO) => {
+    try {
+      setLoading(true);
+      const response = await LOGIN_USER(input);
+      setLoading(false);
+      const res = onSuccess(response);
+      if (res && res.status) {
+        const { data } = response?.data;
+        localStorage.setItem(AUTH_CONSTANTS.AUTH_TOKEN, JSON.stringify(data?.accessToken));
+        dispatch(addUserData(data?.user));
+        navigate('/dashboard');
+        toast.success(res.message || 'An error. Try again');
+        return;
+      } else {
+        toast.error(res.message || 'An error. Try again');
+      }
+    } catch (e: unknown | CustomAxiosErrorType) {
+      let msg = '';
+      const disError = onError(e as CustomAxiosErrorType);
+      msg = disError as string;
+      toast.error(msg);
+      setLoading(false);
+    }
+  };
+
   const formik = useFormik<LoginFormValues>({
     initialValues: {
       email: '',
@@ -21,8 +57,9 @@ const LoginForm = () => {
       password: Yup.string().required('Required'),
     }),
     onSubmit: (values) => {
-      toast.success('Login successful!');
+      // toast.success('Login successful!');
       console.log('Login values:', values);
+      doLogin(values);
     },
   });
 
@@ -64,9 +101,15 @@ const LoginForm = () => {
         ) : null}
       </div>
 
-      <Button className="border-RED" onClick={() => navigate('/dashboard')}>
-        Log In
-      </Button>
+      {!loading ? (
+        <Button className="border-RED" onClick={() => formik.handleSubmit()}>
+          Log In
+        </Button>
+      ) : (
+        // <div className=" items-center">
+        <BeatLoader color="blue" />
+        // </div>
+      )}
     </form>
   );
 };

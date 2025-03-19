@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
 import { Navigate, Outlet, useNavigate } from 'react-router-dom';
 
 const AuthProtect = () => {
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('accessToken');
   const navigate = useNavigate();
 
   const isTokenExpired = (userToken: string) => {
@@ -18,7 +19,8 @@ const AuthProtect = () => {
   };
   useEffect(() => {
     if (!token || isTokenExpired(token)) {
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('accessToken');
+      toast.success('Unauthorized action. Login to proceed');
       navigate('/');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

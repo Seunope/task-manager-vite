@@ -1,4 +1,3 @@
-import SignIn from './pages/auth/Signin';
 import 'react-toastify/dist/ReactToastify.css';
 import ErrorPage from './components/ErrorPage';
 import { ToastContainer } from 'react-toastify';
@@ -15,30 +14,17 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
   },
   {
-    path: '/dashboard',
-    element: <Dashboard />,
+    path: '/',
+    element: <AuthProtect />,
     errorElement: <ErrorPage />,
+    children: [
+      {
+        path: '/dashboard',
+        element: <Dashboard />,
+        errorElement: <ErrorPage />,
+      },
+    ],
   },
-
-  // {
-  //   path: '/',
-  //   element: <AuthProtect />,
-  //   errorElement: <ErrorPage />,
-  //   children: [
-  //     ...onboardingRoutes,
-  //     ...caaRoutes,
-  //     ...srRoutes,
-  //     ...tsRoutes,
-  //     ...boRoutes,
-  //     ...waoRoutes,
-  //     ...lmRoutes,
-  //     {
-  //       path: '/market-place',
-  //       element: <MarketPlace />,
-  //       errorElement: <ErrorPage />,
-  //     },
-  //   ],
-  // },
   {
     path: '/unauthorized',
     element: <UnauthorizedPage />,
