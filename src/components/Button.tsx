@@ -5,18 +5,14 @@ type Props = DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButt
   onClick: () => void;
   children?: ReactNode;
   width?: string;
-  variant: 'solid' | 'outline';
+  // variant: 'solid' | 'outline';
 };
-function Button({ width = 'w-full', children, variant, className, onClick }: Props) {
-  const styles = {
-    solid: `h-10  'w-full' ${width}  bg-PRIMARY rounded-lg font-semibold text-BACKGROUND ${className}`,
-    outline: `h-10 w-full border-2 border-PRIMARY rounded-lg font-semibold text-PRIMARY ${
-      className
-    }`,
-  };
-
+function Button({ width = 'w-full', children, className, onClick }: Props) {
+  const styles = `${width} flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
+    className
+  }`;
   return (
-    <button className={styles[variant]} onClick={onClick}>
+    <button className={styles} onClick={onClick}>
       {children}
     </button>
   );

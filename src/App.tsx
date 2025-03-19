@@ -6,11 +6,17 @@ import AuthProtect from './config/utils/AuthProtect';
 import UnauthorizedPage from './components/UnauthorizedPage';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Home from './pages/Home';
+import Dashboard from './pages/Dashboard';
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <Home />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/dashboard',
+    element: <Dashboard />,
     errorElement: <ErrorPage />,
   },
 

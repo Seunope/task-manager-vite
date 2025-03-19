@@ -21,9 +21,7 @@ const UnauthorizedPage = () => {
           <i className="text-RED">No Access</i>
         </p>
 
-        <Button variant="solid" onClick={() => navigate('/')}>
-          Go Back Home
-        </Button>
+        <Button onClick={() => navigate('/')}>Go Back Home</Button>
       </div>
     </div>
   );
