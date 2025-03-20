@@ -2,9 +2,11 @@ import storage from 'redux-persist/lib/storage';
 import { persistReducer, persistStore } from 'redux-persist';
 import userReducer, { UserState } from './reducers/userSlice';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import taskReducer, { TaskState } from './reducers/taskSlice';
 
 export type CentralState = {
   user: UserState;
+  task: TaskState;
 };
 
 const persistConfig = {
@@ -14,6 +16,7 @@ const persistConfig = {
 
 const rootReducers = combineReducers({
   user: userReducer,
+  task: taskReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducers);

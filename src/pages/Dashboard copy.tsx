@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaCheckCircle, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaCheckCircle } from 'react-icons/fa';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
@@ -23,7 +23,6 @@ const initialTasks: Record<TaskStatus, { id: string; content: string }[]> = {
 const Dashboard = () => {
   const [tasks, setTasks] = useState(initialTasks);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<{ id: string; content: string } | null>(null);
   const navigate = useNavigate();
 
   // Handle drag-and-drop
@@ -54,28 +53,10 @@ const Dashboard = () => {
     console.log('Task moved:', task.id, 'from', source.droppableId, 'to', destination.droppableId);
   };
 
-  // Handle task deletion
-  const handleDeleteTask = (taskId: string) => {
-    const updatedTasks = { ...tasks };
-    Object.keys(updatedTasks).forEach((status) => {
-      updatedTasks[status as TaskStatus] = updatedTasks[status as TaskStatus].filter(
-        (task) => task.id !== taskId,
-      );
-    });
-    setTasks(updatedTasks);
-    toast.success('Task deleted successfully!');
-  };
-
-  // Handle task editing
-  const handleEditTask = (task: { id: string; content: string }) => {
-    setEditingTask(task);
-    setIsModalOpen(true);
-  };
-
-  // Formik form for creating/editing tasks
+  // Formik form for creating tasks
   const formik = useFormik({
     initialValues: {
-      title: editingTask ? editingTask.content : '',
+      title: '',
       description: '',
     },
     validationSchema: Yup.object({
@@ -83,27 +64,23 @@ const Dashboard = () => {
       description: Yup.string().required('Description is required'),
     }),
     onSubmit: (values) => {
-      if (editingTask) {
-        // Simulate API call to update the task
-        const updatedTasks = { ...tasks };
-        Object.keys(updatedTasks).forEach((status) => {
-          updatedTasks[status as TaskStatus] = updatedTasks[status as TaskStatus].map((task) =>
-            task.id === editingTask.id ? { ...task, content: values.title } : task,
-          );
-        });
-        setTasks(updatedTasks);
-        toast.success('Task updated successfully!');
-      } else {
-        // Simulate API call to create a task
-        const newTask = { id: String(Date.now()), content: values.title };
-        setTasks({ ...tasks, pending: [...tasks.pending, newTask] });
-        toast.success('Task created successfully!');
-      }
+      // Simulate API call to create a task
+      console.log('Task created:', values);
+
+      // Show success toast
+      toast.success(
+        <div className="flex items-center">
+          <FaCheckCircle className="mr-2" />
+          Task created successfully!
+        </div>,
+        {
+          autoClose: 2000,
+        },
+      );
 
       // Close the modal after 2 seconds
       setTimeout(() => {
         setIsModalOpen(false);
-        setEditingTask(null);
         navigate('/dashboard'); // Redirect to the dashboard
       }, 2000);
     },
@@ -113,7 +90,6 @@ const Dashboard = () => {
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       setIsModalOpen(false);
-      setEditingTask(null);
     }
   };
 
@@ -140,19 +116,9 @@ const Dashboard = () => {
                         {...draggableProvided.draggableProps}
                         {...draggableProvided.dragHandleProps}
                         ref={draggableProvided.innerRef}
-                        className="bg-gray-50 p-2 mb-2 rounded-md shadow-sm flex justify-between items-center"
+                        className="bg-gray-50 p-2 mb-2 rounded-md shadow-sm"
                       >
                         {task.content}
-                        <div className="flex space-x-2">
-                          <FaEdit
-                            className="cursor-pointer text-blue-500"
-                            onClick={() => handleEditTask(task)}
-                          />
-                          <FaTrash
-                            className="cursor-pointer text-red-500"
-                            onClick={() => handleDeleteTask(task.id)}
-                          />
-                        </div>
                       </div>
                     )}
                   </Draggable>
@@ -178,19 +144,9 @@ const Dashboard = () => {
                         {...innerProvided.draggableProps}
                         {...innerProvided.dragHandleProps}
                         ref={innerProvided.innerRef}
-                        className="bg-gray-50 p-2 mb-2 rounded-md shadow-sm flex justify-between items-center"
+                        className="bg-gray-50 p-2 mb-2 rounded-md shadow-sm"
                       >
                         {task.content}
-                        <div className="flex space-x-2">
-                          <FaEdit
-                            className="cursor-pointer text-blue-500"
-                            onClick={() => handleEditTask(task)}
-                          />
-                          <FaTrash
-                            className="cursor-pointer text-red-500"
-                            onClick={() => handleDeleteTask(task.id)}
-                          />
-                        </div>
                       </div>
                     )}
                   </Draggable>
@@ -216,19 +172,9 @@ const Dashboard = () => {
                         {...draggableProvided.draggableProps}
                         {...draggableProvided.dragHandleProps}
                         ref={draggableProvided.innerRef}
-                        className="bg-gray-50 p-2 mb-2 rounded-md shadow-sm flex justify-between items-center"
+                        className="bg-gray-50 p-2 mb-2 rounded-md shadow-sm"
                       >
                         {task.content}
-                        <div className="flex space-x-2">
-                          <FaEdit
-                            className="cursor-pointer text-blue-500"
-                            onClick={() => handleEditTask(task)}
-                          />
-                          <FaTrash
-                            className="cursor-pointer text-red-500"
-                            onClick={() => handleDeleteTask(task.id)}
-                          />
-                        </div>
                       </div>
                     )}
                   </Draggable>
@@ -248,14 +194,14 @@ const Dashboard = () => {
         Create Task
       </button>
 
-      {/* Create/Edit Task Modal */}
+      {/* Create Task Modal */}
       {isModalOpen && (
         <div
           className="fixed inset-0 bg-gray-3 bg-opacity-50 flex items-center justify-center p-4"
           onClick={handleOverlayClick}
         >
           <div className="bg-background rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">{editingTask ? 'Edit Task' : 'Create Task'}</h2>
+            <h2 className="text-xl font-bold mb-4">Create Task</h2>
             <form onSubmit={formik.handleSubmit}>
               <div className="mb-4">
                 <label htmlFor="title" className="block text-sm font-medium text-gray-700">
@@ -295,10 +241,7 @@ const Dashboard = () => {
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setEditingTask(null);
-                  }}
+                  onClick={() => setIsModalOpen(false)}
                   className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
                 >
                   Cancel
@@ -307,7 +250,7 @@ const Dashboard = () => {
                   type="submit"
                   className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
                 >
-                  {editingTask ? 'Update' : 'Create'}
+                  Create
                 </button>
               </div>
             </form>

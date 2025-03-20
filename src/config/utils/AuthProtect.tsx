@@ -21,7 +21,7 @@ const AuthProtect = () => {
     if (!token || isTokenExpired(token)) {
       localStorage.removeItem('accessToken');
       toast.success('Unauthorized action. Login to proceed');
-      navigate('/');
+      navigate('/unauthorized');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
