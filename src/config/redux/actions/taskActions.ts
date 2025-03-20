@@ -1,7 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { CreateTaskDTO } from '../../utils/types';
-import { UpdateTaskDTO, UpdateTaskStatusDTO } from './../../utils/types';
 import { CREATE_TASK, GET_TASK, UPDATE_TASK, UPDATE_TASK_STATUS } from '../../api/http';
+import { CreateTaskDTO, UpdateTaskDTO, UpdateTaskStatusDTO } from '../../utils/types';
 
 export const createTask = createAsyncThunk('task/create', async (dto: CreateTaskDTO) => {
   const { data } = await CREATE_TASK(dto);

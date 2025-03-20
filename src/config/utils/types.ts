@@ -12,9 +12,10 @@ export type UserDTO = {
 };
 
 export type TaskDTO = {
-  id: string;
+  id: number;
   title: string;
-  user_id: string;
+  user_id: number;
+  status: TaskStatus;
   description: string;
   created_at: string;
 };
@@ -31,18 +32,17 @@ export type SignUpDTO = {
 };
 
 export type UpdateTaskStatusDTO = {
-  taskId: string;
+  taskId: number;
   status: TaskStatus;
 };
 
 export type UpdateTaskDTO = {
-  name: string;
-  taskId: string;
+  title: string;
+  taskId: number;
   description: string;
-  status: TaskStatus;
 };
 
 export type CreateTaskDTO = {
-  name: string;
+  title: string;
   description: string;
 };

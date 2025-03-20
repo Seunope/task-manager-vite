@@ -27,7 +27,7 @@ export const GET_TASK = async () => {
 
 export const UPDATE_TASK_STATUS = async (data: UpdateTaskStatusDTO) => {
   const url = `${BASE_URL}/v1/task/${data.taskId}/status`;
-  return await PatchFunc(url, { data });
+  return await PatchFunc(url, { status: data.status });
 };
 
 export const UPDATE_TASK = async (data: UpdateTaskDTO) => {
