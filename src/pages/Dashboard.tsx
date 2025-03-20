@@ -172,7 +172,7 @@ const Dashboard = () => {
       {/* Create Task Button */}
       <button
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-600 text-sm sm:text-base"
+        className="fixed bottom-4 right-4 bg-blue-1 text-background px-4 py-2 rounded-full shadow-lg hover:bg-blue-600 text-sm sm:text-base"
       >
         Create Task
       </button>
@@ -200,7 +200,7 @@ const Dashboard = () => {
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
                 {formik.touched.title && formik.errors.title ? (
-                  <div className="text-red-500 text-sm">{formik.errors.title}</div>
+                  <div className="text-red-1 text-sm">{formik.errors.title}</div>
                 ) : null}
               </div>
 
@@ -217,7 +217,7 @@ const Dashboard = () => {
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
                 {formik.touched.description && formik.errors.description ? (
-                  <div className="text-red-500 text-sm">{formik.errors.description}</div>
+                  <div className="text-red-1 text-sm">{formik.errors.description}</div>
                 ) : null}
               </div>
 
@@ -229,13 +229,13 @@ const Dashboard = () => {
                     setEditingTask(null);
                     formik.resetForm(); // Clear Formik state
                   }}
-                  className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+                  className="bg-gray-1 text-white px-4 py-2 rounded-md hover:bg-gray-600"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                  className="bg-blue-1 text-white px-4 py-2 rounded-md hover:bg-blue-600"
                 >
                   {editingTask ? 'Update' : 'Create'}
                 </button>

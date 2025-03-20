@@ -5,7 +5,7 @@ import { AUTH_CONSTANTS } from '../../constants/auth';
 axios.interceptors.request.use(async (config) => {
   if (config) {
     const token = JSON.parse(localStorage.getItem(AUTH_CONSTANTS.AUTH_TOKEN) as string);
-    console.log('token', token);
+    // console.log('token', token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

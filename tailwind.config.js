@@ -11,13 +11,13 @@ export default {
         2: '#EEEEEE',
         3: '#8B909A',
       },
-      green: {
-        3: '#F5F8F4',
-      },
       blue: {
         1: '#0CA6DB',
         2: '#0779E4',
         3: '#2202E9',
+      },
+      red: {
+        1: 'red',
       },
     },
     fontFamily: {
