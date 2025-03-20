@@ -1,82 +1,33 @@
-import { useState } from 'react';
-import { FaCheckCircle, FaEdit, FaTrash } from 'react-icons/fa';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { FaEdit, FaTrash, FaCheckCircle } from 'react-icons/fa';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-
-// Mock tasks
-type TaskStatus = 'pending' | 'inProgress' | 'completed';
-
-const initialTasks: Record<TaskStatus, { id: string; content: string }[]> = {
-  pending: [
-    { id: '1', content: 'Task 1' },
-    { id: '2', content: 'Task 2' },
-  ],
-  inProgress: [{ id: '3', content: 'Task 3' }],
-  completed: [{ id: '4', content: 'Task 4' }],
-};
+import {
+  createTask,
+  fetchAllTask,
+  editTask,
+  updateTaskStatus,
+} from '../config/redux/actions/taskActions';
+import { TaskDTO } from '../config/utils/types';
+import { AppDispatch, CentralState } from '../config/redux/store';
+import { TaskState } from '../config/redux/reducers/taskSlice';
+import { BeatLoader } from 'react-spinners';
 
 const Dashboard = () => {
-  const [tasks, setTasks] = useState(initialTasks);
+  const dispatch = useDispatch<AppDispatch>();
+  const { tasks, loading, error } = useSelector<CentralState, TaskState>((state) => state.task);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<{ id: string; content: string } | null>(null);
-  const navigate = useNavigate();
+  const [editingTask, setEditingTask] = useState<TaskDTO | null>(null);
 
-  // Handle drag-and-drop
-  const onDragEnd = (result: DropResult) => {
-    const { source, destination } = result;
-
-    // If dropped outside the list, do nothing
-    if (!destination) return;
-
-    // If dropped in the same position, do nothing
-    if (source.droppableId === destination.droppableId && source.index === destination.index)
-      return;
-    const sourceList = tasks[source.droppableId as TaskStatus];
-    // Find the task being dragged
-    const task = sourceList[source.index];
-
-    // Remove the task from the source list
-    sourceList.splice(source.index, 1);
-
-    // Add the task to the destination list
-    const destinationList = tasks[destination.droppableId as TaskStatus];
-    destinationList.splice(destination.index, 0, task);
-
-    // Update the state
-    setTasks({ ...tasks });
-
-    // Simulate an API call to update the task status
-    console.log('Task moved:', task.id, 'from', source.droppableId, 'to', destination.droppableId);
-  };
-
-  // Handle task deletion
-  const handleDeleteTask = (taskId: string) => {
-    const updatedTasks = { ...tasks };
-    Object.keys(updatedTasks).forEach((status) => {
-      updatedTasks[status as TaskStatus] = updatedTasks[status as TaskStatus].filter(
-        (task) => task.id !== taskId,
-      );
-    });
-    setTasks(updatedTasks);
-    toast.success('Task deleted successfully!');
-  };
-
-  // Handle task editing
-  const handleEditTask = (task: { id: string; content: string }) => {
-    setEditingTask(task);
-    setIsModalOpen(true);
-  };
-
-  // Formik form for creating/editing tasks
   const formik = useFormik({
     initialValues: {
-      title: editingTask ? editingTask.content : '',
-      description: '',
+      title: editingTask ? editingTask.title : '',
+      description: editingTask ? editingTask.description : '',
     },
     validationSchema: Yup.object({
       title: Yup.string().required('Title is required'),
@@ -84,32 +35,50 @@ const Dashboard = () => {
     }),
     onSubmit: (values) => {
       if (editingTask) {
-        // Simulate API call to update the task
-        const updatedTasks = { ...tasks };
-        Object.keys(updatedTasks).forEach((status) => {
-          updatedTasks[status as TaskStatus] = updatedTasks[status as TaskStatus].map((task) =>
-            task.id === editingTask.id ? { ...task, content: values.title } : task,
-          );
-        });
-        setTasks(updatedTasks);
+        dispatch(editTask({ taskId: editingTask.id, ...values }));
         toast.success('Task updated successfully!');
       } else {
-        // Simulate API call to create a task
-        const newTask = { id: String(Date.now()), content: values.title };
-        setTasks({ ...tasks, pending: [...tasks.pending, newTask] });
+        dispatch(createTask(values));
         toast.success('Task created successfully!');
       }
-
-      // Close the modal after 2 seconds
-      setTimeout(() => {
-        setIsModalOpen(false);
-        setEditingTask(null);
-        navigate('/dashboard'); // Redirect to the dashboard
-      }, 2000);
+      setIsModalOpen(false);
+      setEditingTask(null);
     },
   });
 
-  // Close modal when overlay is clicked
+  useEffect(() => {
+    dispatch(fetchAllTask());
+  }, [dispatch]);
+
+  const onDragEnd = (result: DropResult) => {
+    const { source, destination } = result;
+
+    if (!destination) return;
+    if (source.droppableId === destination.droppableId && source.index === destination.index)
+      return;
+
+    const foundTask = tasks.find((task) => task.id === Number(result.draggableId));
+
+    if (foundTask) {
+      dispatch(
+        updateTaskStatus({
+          taskId: foundTask.id,
+          status: destination.droppableId as 'pending' | 'in-progress' | 'completed',
+        }),
+      );
+    }
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    // Implement delete functionality if needed
+    toast.success('Task deleted successfully!');
+  };
+
+  const handleEditTask = (task: TaskDTO) => {
+    setEditingTask(task);
+    setIsModalOpen(true);
+  };
+
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       setIsModalOpen(false);
@@ -121,122 +90,57 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gray-100">
       <Header />
 
+      {/* Loading and Error Handling */}
+      {loading && (
+        <div className="text-center mt-4">
+          <BeatLoader color="blue" />
+        </div>
+      )}
+      {/* {error && <div className="text-center text-red-500">{error}</div>} */}
+
       {/* Dashboard */}
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Pending Tasks */}
-          <Droppable droppableId="pending">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="bg-white p-4 rounded-lg shadow"
-              >
-                <h2 className="text-lg font-semibold mb-4">Pending</h2>
-                {tasks.pending.map((task, index) => (
-                  <Draggable key={task.id} draggableId={task.id} index={index}>
-                    {(draggableProvided) => (
-                      <div
-                        {...draggableProvided.draggableProps}
-                        {...draggableProvided.dragHandleProps}
-                        ref={draggableProvided.innerRef}
-                        className="bg-gray-50 p-2 mb-2 rounded-md shadow-sm flex justify-between items-center"
-                      >
-                        {task.content}
-                        <div className="flex space-x-2">
-                          <FaEdit
-                            className="cursor-pointer text-blue-500"
-                            onClick={() => handleEditTask(task)}
-                          />
-                          <FaTrash
-                            className="cursor-pointer text-red-500"
-                            onClick={() => handleDeleteTask(task.id)}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-
-          {/* In Progress Tasks */}
-          <Droppable droppableId="inProgress">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="bg-white p-4 rounded-lg shadow"
-              >
-                <h2 className="text-lg font-semibold mb-4">In Progress</h2>
-                {tasks.inProgress.map((task, index) => (
-                  <Draggable key={task.id} draggableId={task.id} index={index}>
-                    {(innerProvided) => (
-                      <div
-                        {...innerProvided.draggableProps}
-                        {...innerProvided.dragHandleProps}
-                        ref={innerProvided.innerRef}
-                        className="bg-gray-50 p-2 mb-2 rounded-md shadow-sm flex justify-between items-center"
-                      >
-                        {task.content}
-                        <div className="flex space-x-2">
-                          <FaEdit
-                            className="cursor-pointer text-blue-500"
-                            onClick={() => handleEditTask(task)}
-                          />
-                          <FaTrash
-                            className="cursor-pointer text-red-500"
-                            onClick={() => handleDeleteTask(task.id)}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-
-          {/* Completed Tasks */}
-          <Droppable droppableId="completed">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="bg-white p-4 rounded-lg shadow"
-              >
-                <h2 className="text-lg font-semibold mb-4">Completed</h2>
-                {tasks.completed.map((task, index) => (
-                  <Draggable key={task.id} draggableId={task.id} index={index}>
-                    {(draggableProvided) => (
-                      <div
-                        {...draggableProvided.draggableProps}
-                        {...draggableProvided.dragHandleProps}
-                        ref={draggableProvided.innerRef}
-                        className="bg-gray-50 p-2 mb-2 rounded-md shadow-sm flex justify-between items-center"
-                      >
-                        {task.content}
-                        <div className="flex space-x-2">
-                          <FaEdit
-                            className="cursor-pointer text-blue-500"
-                            onClick={() => handleEditTask(task)}
-                          />
-                          <FaTrash
-                            className="cursor-pointer text-red-500"
-                            onClick={() => handleDeleteTask(task.id)}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
+          {['pending', 'in-progress', 'completed'].map((status) => (
+            <Droppable key={status} droppableId={status}>
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="bg-white p-4 rounded-lg shadow"
+                >
+                  <h2 className="text-lg font-semibold mb-4">{status}</h2>
+                  {tasks
+                    .filter((task) => task.status === status)
+                    .map((task, index) => (
+                      <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
+                        {(draggableProvided) => (
+                          <div
+                            {...draggableProvided.draggableProps}
+                            {...draggableProvided.dragHandleProps}
+                            ref={draggableProvided.innerRef}
+                            className="bg-gray-50 p-2 mb-2 rounded-md shadow-sm flex justify-between items-center"
+                          >
+                            {task.title}
+                            <div className="flex space-x-2">
+                              <FaEdit
+                                className="cursor-pointer text-blue-500"
+                                onClick={() => handleEditTask(task)}
+                              />
+                              <FaTrash
+                                className="cursor-pointer text-red-500"
+                                onClick={() => handleDeleteTask(task.id.toString())}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          ))}
         </div>
       </DragDropContext>
 
@@ -267,7 +171,7 @@ const Dashboard = () => {
                   type="text"
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  value={formik.values.title}
+                  value={formik.values.title || editingTask?.title}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
                 {formik.touched.title && formik.errors.title ? (
@@ -284,7 +188,7 @@ const Dashboard = () => {
                   name="description"
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  value={formik.values.description}
+                  value={formik.values.description || editingTask?.description}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
                 {formik.touched.description && formik.errors.description ? (
@@ -314,9 +218,6 @@ const Dashboard = () => {
           </div>
         </div>
       )}
-
-      {/* Toast Container */}
-      {/* <ToastContainer /> */}
     </div>
   );
 };

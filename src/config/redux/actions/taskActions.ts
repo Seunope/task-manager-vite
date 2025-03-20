@@ -1,5 +1,11 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { CREATE_TASK, GET_TASK, UPDATE_TASK, UPDATE_TASK_STATUS } from '../../api/http';
+import {
+  CREATE_TASK,
+  DELETE_TASK,
+  GET_TASK,
+  UPDATE_TASK,
+  UPDATE_TASK_STATUS,
+} from '../../api/http';
 import { CreateTaskDTO, UpdateTaskDTO, UpdateTaskStatusDTO } from '../../utils/types';
 
 export const createTask = createAsyncThunk('task/create', async (dto: CreateTaskDTO) => {
@@ -28,3 +34,9 @@ export const updateTaskStatus = createAsyncThunk(
     return data;
   },
 );
+
+export const deleteTask = createAsyncThunk('task/delete', async (taskId: string) => {
+  const { data } = await DELETE_TASK(taskId);
+  // console.log("DATAAAA", data);
+  return data;
+});

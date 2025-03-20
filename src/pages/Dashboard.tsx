@@ -6,23 +6,62 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import {
   createTask,
   fetchAllTask,
   editTask,
   updateTaskStatus,
+  deleteTask,
 } from '../config/redux/actions/taskActions';
 import { TaskDTO } from '../config/utils/types';
 import { AppDispatch, CentralState } from '../config/redux/store';
 import { TaskState } from '../config/redux/reducers/taskSlice';
+import { BeatLoader } from 'react-spinners';
 
 const Dashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { tasks, loading, error } = useSelector<CentralState, TaskState>((state) => state.task);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskDTO | null>(null);
+
+  const formik = useFormik({
+    initialValues: {
+      title: editingTask ? editingTask.title : '',
+      description: editingTask ? editingTask.description : '',
+    },
+    validationSchema: Yup.object({
+      title: Yup.string().required('Title is required'),
+      description: Yup.string().required('Description is required'),
+    }),
+    onSubmit: (values) => {
+      if (editingTask) {
+        dispatch(editTask({ taskId: editingTask.id, ...values }))
+          .unwrap()
+          .then(() => {
+            toast.success('Task updated successfully!');
+            setIsModalOpen(false);
+            setEditingTask(null);
+            formik.resetForm(); // Clear Formik state
+          })
+          .catch(() => {
+            toast.error('Failed to update task');
+          });
+      } else {
+        dispatch(createTask(values))
+          .unwrap()
+          .then(() => {
+            toast.success('Task created successfully!');
+            setIsModalOpen(false);
+            setEditingTask(null);
+            formik.resetForm(); // Clear Formik state
+          })
+          .catch(() => {
+            toast.error('Failed to create task');
+          });
+      }
+    },
+  });
 
   useEffect(() => {
     dispatch(fetchAllTask());
@@ -48,47 +87,41 @@ const Dashboard = () => {
   };
 
   const handleDeleteTask = (taskId: string) => {
-    // Implement delete functionality if needed
-    toast.success('Task deleted successfully!');
+    dispatch(deleteTask(taskId))
+      .unwrap()
+      .then(() => {
+        toast.success('Task deleted successfully!');
+      })
+      .catch(() => {
+        toast.error('Failed to delete task');
+      });
   };
 
   const handleEditTask = (task: TaskDTO) => {
     setEditingTask(task);
     setIsModalOpen(true);
+    formik.setValues({ title: task.title, description: task.description }); // Pre-fill form
   };
-
-  const formik = useFormik({
-    initialValues: {
-      title: editingTask ? editingTask.title : '',
-      description: editingTask ? editingTask.description : '',
-    },
-    validationSchema: Yup.object({
-      title: Yup.string().required('Title is required'),
-      description: Yup.string().required('Description is required'),
-    }),
-    onSubmit: (values) => {
-      if (editingTask) {
-        dispatch(editTask({ taskId: editingTask.id, ...values }));
-        toast.success('Task updated successfully!');
-      } else {
-        dispatch(createTask(values));
-        toast.success('Task created successfully!');
-      }
-      setIsModalOpen(false);
-      setEditingTask(null);
-    },
-  });
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       setIsModalOpen(false);
       setEditingTask(null);
+      formik.resetForm(); // Clear Formik state
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Header />
+
+      {/* Loading and Error Handling */}
+      {loading && (
+        <div className="text-center mt-4">
+          <BeatLoader color="blue" />
+        </div>
+      )}
+      {error && <div className="text-center text-red-500">{error}</div>}
 
       {/* Dashboard */}
       <DragDropContext onDragEnd={onDragEnd}>
@@ -194,6 +227,7 @@ const Dashboard = () => {
                   onClick={() => {
                     setIsModalOpen(false);
                     setEditingTask(null);
+                    formik.resetForm(); // Clear Formik state
                   }}
                   className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
                 >
@@ -210,10 +244,6 @@ const Dashboard = () => {
           </div>
         </div>
       )}
-
-      {/* Loading and Error Handling */}
-      {loading && <div className="text-center">Loading...</div>}
-      {/* {error && <div className="text-center text-red-500">{error}</div>} */}
     </div>
   );
 };

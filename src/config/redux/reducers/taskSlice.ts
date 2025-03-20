@@ -1,18 +1,24 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TaskDTO } from '../../utils/types';
-import { createTask, fetchAllTask, editTask, updateTaskStatus } from '../actions/taskActions';
+import {
+  createTask,
+  fetchAllTask,
+  editTask,
+  updateTaskStatus,
+  deleteTask,
+} from '../actions/taskActions';
 
 export interface TaskState {
   tasks: TaskDTO[];
   loading: boolean;
-  refresh: boolean;
+  // refresh: boolean;
   error: string | null;
 }
 
 const initialState: TaskState = {
   tasks: [],
   error: null,
-  refresh: false,
+  // refresh: false,
   loading: false,
 };
 
@@ -35,7 +41,6 @@ const taskSlice = createSlice({
     builder.addCase(fetchAllTask.fulfilled, (state, action) => {
       state.tasks = action.payload.data;
       state.loading = false;
-      state.refresh = false;
     });
     builder.addCase(fetchAllTask.rejected, (state, action) => {
       state.loading = false;
@@ -61,9 +66,9 @@ const taskSlice = createSlice({
       state.loading = true;
       state.error = null;
     });
-    builder.addCase(editTask.fulfilled, (state, action: PayloadAction<TaskDTO>) => {
+    builder.addCase(editTask.fulfilled, (state, action) => {
       state.tasks = state.tasks.map((task) =>
-        task.id === action.payload.id ? action.payload : task,
+        task.id === action.payload.data.id ? action.payload.data : task,
       );
       state.loading = false;
     });
@@ -78,16 +83,29 @@ const taskSlice = createSlice({
       state.error = null;
     });
     builder.addCase(updateTaskStatus.fulfilled, (state, action) => {
-      console.log('action.payload.SSS', action.payload.data);
+      // console.log('action.payload.SSS', action.payload.data);
       state.tasks = state.tasks.map((task) =>
         task.id === action.payload.data.id ? action.payload.data : task,
       );
       state.loading = false;
-      // state.refresh = true;
     });
     builder.addCase(updateTaskStatus.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message || 'Failed to update task status';
+    });
+
+    // Delete a task
+    builder.addCase(deleteTask.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(deleteTask.fulfilled, (state, action) => {
+      state.tasks = state.tasks.filter((task) => task.id !== action.payload.data.id);
+      state.loading = false;
+    });
+    builder.addCase(deleteTask.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || 'Failed to delete task';
     });
   },
 });
